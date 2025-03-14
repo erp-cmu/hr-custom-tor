@@ -129,9 +129,9 @@ app_license = "mit"
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+    "Salary Slip": "hr_custom_tor.overrides.custom_salary_slip.CustomSalarySlip"
+}
 
 # Document Events
 # ---------------
@@ -242,3 +242,9 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+
+fixtures = [
+    {"doctype": "Custom Field", "filters": [["module", "=", "hr_custom_tor"]]},
+    "Employee",
+    "Shift Type",
+]
