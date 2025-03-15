@@ -1,11 +1,13 @@
 # Copyright (c) 2025, IECMU and contributors
 # For license information, please see license.txt
 
+import os
+import re
+import shutil
+
 import frappe
 from frappe.model.document import Document
-from frappe.utils import now, get_site_path
-import shutil
-import os
+from frappe.utils import get_site_path, now
 
 
 def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
@@ -17,10 +19,10 @@ def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
     if suffix is None:
         suffix = ""
 
-    if not prefix:
+    if prefix:
         prefix = prefix + "_"
 
-    if not suffix:
+    if suffix:
         suffix = "_" + suffix
 
     f = fname.rsplit(".", 1)
@@ -31,29 +33,32 @@ def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
     return f"{prefix}{partial}{suffix}{extn}"
 
 
+def is_already_renamed(filepath):
+    fname = os.path.basename(filepath)
+    result = re.search(r"^\d{4}_\d{2}_\d{2}", fname)
+    return bool(result)
+
+
 class TorAttendanceImport(Document):
     def before_save(self):
         cur_filepath = self.checkin_file or None
 
-        if cur_filepath:
-            if cur_filepath.startswith("/private/files/"):
-                path_prefix = "/private/files/"
-                cur_filename = cur_filepath.replace("/private/files/", "")
-            elif cur_filepath.startswith("/files/"):
-                path_prefix = "/files/"
-                cur_filename = cur_filepath.replace("/files/", "")
-            else:
+        if cur_filepath and not is_already_renamed(cur_filepath):
+            if not cur_filepath.startswith(("/private/files/", "/files/")):
                 frappe.throw("File path is not valid")
 
+            split = os.path.split(cur_filepath)
+            # path_prefix with have leading "/" but not trailing "/"
+            path_prefix, cur_filename = split
+            # Add trailing "/" to align with the convention
+            path_prefix = path_prefix + "/"
+
             try:
-                file_docs = frappe.get_all(
+                cur_file_doc = frappe.get_last_doc(
                     "File",
                     filters={"file_url": cur_filepath},
-                    fields=["name", "is_private", "file_url"],
                 )
-                if file_docs:
-                    old_file_doc = frappe.get_doc("File", file_docs[0]["name"])
-
+                if cur_file_doc:
                     new_filename = insert_file_suffix_prefix(cur_filename)
                     new_filepath = f"{path_prefix}{new_filename}"
 
@@ -63,13 +68,19 @@ class TorAttendanceImport(Document):
                     shutil.copyfile(cur_filepath_site, new_filepath_site)
                     os.remove(cur_filepath_site)
 
-                    new_file_doc = frappe.copy_doc(old_file_doc)
-                    new_file_doc.is_private = old_file_doc.is_private
-                    new_file_doc.file_url = new_filepath
-                    new_file_doc.file_name = new_filename
-                    new_file_doc.save(ignore_permissions=True)
-                    self.checkin_file = new_file_doc.file_url
-                    old_file_doc.delete(ignore_permissions=True)
+                    cur_file_doc.file_url = new_filepath
+                    cur_file_doc.file_name = new_filename
+                    cur_file_doc.save()
+                    self.checkin_file = cur_file_doc.file_url
+
+                    # This method does not work
+                    # new_file_doc = frappe.copy_doc(cur_file_doc)
+                    # new_file_doc.is_private = cur_file_doc.is_private
+                    # new_file_doc.file_url = new_filepath
+                    # new_file_doc.file_name = new_filename
+                    # new_file_doc.save(ignore_permissions=True)
+                    # self.checkin_file = new_file_doc.file_url
+                    # cur_file_doc.delete(ignore_permissions=True)
                 else:
                     frappe.log_error("File not found.")
             except Exception as e:
