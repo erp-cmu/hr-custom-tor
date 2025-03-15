@@ -43,6 +43,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
+doctype_js = {"Leave Application": "public/js/leave_application.js"}
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -130,7 +131,8 @@ app_license = "mit"
 # Override standard doctype classes
 
 override_doctype_class = {
-    "Salary Slip": "hr_custom_tor.overrides.custom_salary_slip.CustomSalarySlip"
+    "Salary Slip": "hr_custom_tor.overrides.custom_salary_slip.CustomSalarySlip",
+    "Leave Application": "hr_custom_tor.overrides.custom_leave_application.CustomLeaveApplication",
 }
 
 # Document Events
@@ -247,4 +249,12 @@ fixtures = [
     {"doctype": "Custom Field", "filters": [["module", "=", "hr_custom_tor"]]},
     "Employee",
     "Shift Type",
+    {
+        "doctype": "Custom Field",
+        "filters": [["name", "in", ("Leave Application-custom_hours",)]],
+    },
+    {
+        "doctype": "Property Setter",
+        "filters": [["name", "in", ("Leave Application-total_leave_days-precision",)]],
+    },
 ]

@@ -7,9 +7,7 @@ from frappe.utils import getdate
 
 
 def findEmployee(searchStr):
-
     searchStr = searchStr.strip()
-
     name = frappe.db.exists(
         "Employee",
         {
@@ -44,7 +42,6 @@ def findEmployee(searchStr):
 
 
 class TorDrink(Document):
-
     def before_save(self):
         emp = "EMPA"
         attDate = getdate("2025-03-01")
