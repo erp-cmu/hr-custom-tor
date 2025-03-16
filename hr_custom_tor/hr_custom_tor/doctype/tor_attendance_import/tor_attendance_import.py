@@ -88,3 +88,34 @@ class TorAttendanceImport(Document):
                     f"Error handling attachment: {str(e)}",
                     "Attachment Handling Exception",
                 )
+
+    def start_import(self):
+        item = frappe.get_doc(
+            {"doctype": "Tor Attendance Import Item", "fullname": "test"}
+        )
+
+        self.append("attendance_data", item)
+        return self
+
+
+@frappe.whitelist()
+def form_start_import(data_import: str):
+    return frappe.get_doc("Tor Attendance Import", data_import).start_import()
+
+
+def start_import(data_import):
+    data_import = frappe.get_doc("Tor Attendance Import", data_import)
+    # try:
+    # 	i = Importer(data_import.reference_doctype, data_import=data_import)
+    # 	i.import_data()
+    # except JobTimeoutException:
+    # 	frappe.db.rollback()
+    # 	data_import.db_set("status", "Timed Out")
+    # except Exception:
+    # 	frappe.db.rollback()
+    # 	data_import.db_set("status", "Error")
+    # 	data_import.log_error("Data import failed")
+    # finally:
+    # 	frappe.flags.in_import = False
+
+    frappe.publish_realtime("data_import_refresh", {"data_import": data_import.name})

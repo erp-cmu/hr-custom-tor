@@ -1,13 +1,16 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2025-03-15 10:25:44.826046",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_atjn",
   "amended_from",
+  "naming_series",
   "checkin_file",
+  "status",
   "section_break_gfsf",
   "attendance_data"
  ],
@@ -40,15 +43,32 @@
    "fieldtype": "Table",
    "label": "Attendance Data",
    "options": "Tor Attendance Import Item"
+  },
+  {
+   "default": "TOR-ATT.-.YY.-.MM.-.DD.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "TOR-ATT.-.YY.-.MM.-.DD.-.####"
+  },
+  {
+   "default": "PENDING",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "options": "PENDING\nSUCCESS\nPARTIAL_SUCCESS",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-15 10:30:01.999202",
+ "modified": "2025-03-16 08:11:41.035047",
  "modified_by": "Administrator",
  "module": "Hr Custom Tor",
  "name": "Tor Attendance Import",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
