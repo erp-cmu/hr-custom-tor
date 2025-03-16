@@ -41,16 +41,19 @@ frappe.ui.form.on("Tor Attendance Import", {
   update_primary_action(frm) {
     console.log({ frm, is_new: frm.is_new() });
     console.log("update_primary_action");
-    if (frm.is_dirty()) {
-      frm.enable_save();
-      return;
-    }
-    frm.disable_save();
-    if (!frm.is_new() && frm.has_import_file()) {
-      let label = __("Start Import");
-      frm.page.set_primary_action(label, () => frm.events.start_import(frm));
-    } else {
-      frm.page.set_primary_action(__("Save"), () => frm.save());
+    // if (frm.is_dirty()) {
+    //   frm.enable_save();
+    //   return;
+    // }
+    // frm.disable_save();
+
+    if (frm.doc.status !== "SUCCESS") {
+      if (!frm.is_new() && frm.has_import_file()) {
+        let label = __("Start Import");
+        frm.page.set_primary_action(label, () => frm.events.start_import(frm));
+      } else {
+        frm.page.set_primary_action(__("Save"), () => frm.save());
+      }
     }
   },
 });
