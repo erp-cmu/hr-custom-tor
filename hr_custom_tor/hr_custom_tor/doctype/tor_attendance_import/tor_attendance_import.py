@@ -7,7 +7,9 @@ import shutil
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import get_site_path, now
+from frappe.utils import get_site_path, now, getdate
+import pandas as pd
+from hr_custom_tor.services.hr import findEmployee
 
 
 def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
@@ -89,33 +91,92 @@ class TorAttendanceImport(Document):
                     "Attachment Handling Exception",
                 )
 
-    def start_import(self):
-        item = frappe.get_doc(
-            {"doctype": "Tor Attendance Import Item", "fullname": "test"}
-        )
+    def before_submit(self):
+        inject_attendance(self)
 
-        self.append("attendance_data", item)
+    def start_import(self):
+        try:
+            progress(0, "Starting Import")
+            import_from_checkin_file(self)
+            self.status = "SUCCESS"
+            progress(100, "Finish")
+        except Exception:
+            frappe.db.rollback()
+            self.status = "PENDING"
+        finally:
+            pass
         return self
 
 
+def import_from_checkin_file(doc):
+    filepath = frappe.get_site_path() + doc.checkin_file
+    if not os.path.exists(filepath):
+        frappe.throw(title="Error", msg="This file does not exist")
+
+    try:
+        df = pd.read_excel(filepath)
+    except Exception:
+        frappe.throw(title="Error", msg="Cannot read excel file.")
+
+    def createAttendance(row):
+        date = row["Date"]
+        employeeStr = row["Employee"]
+        employee = findEmployee(employeeStr, get_doc=True)
+        if not employee:
+            frappe.throw(f"Cannot find employee for '{employeeStr}'")
+        # if employee:
+        #     fullname = frappe.db.get_value("Employee", employeeId, "employee_name") or ""
+        item = frappe.get_doc(
+            {
+                "doctype": "Tor Attendance Import Item",
+                "employee": employee.name,
+                "fullname": employee.employee_name,
+                "date": getdate(date, parse_day_first=True),
+            }
+        )
+        doc.append("attendance_data", item)
+        pass
+
+    df.apply(createAttendance, axis=1)
+
+    pass
+
+
+def inject_attendance(self):
+    for attItem in self.attendance_data:
+        employeeName = attItem.employee
+        attDate = getdate(attItem.date)
+        lateTime = 200
+
+        name = frappe.db.exists(
+            "Attendance",
+            {
+                "employee": employeeName,
+                "attendance_date": attDate,
+            },
+        )
+        if name:
+            frappe.db.set_value("Attendance", name, "custom_late_time", lateTime)
+        else:
+            newAtt = frappe.get_doc(
+                {
+                    "doctype": "Attendance",
+                    "employee": employeeName,
+                    "attendance_date": attDate,
+                    "custom_late_time": lateTime,
+                    "status": "Present",
+                    "docstatus": 1,
+                }
+            )
+            newAtt.insert()
+
+
 @frappe.whitelist()
-def form_start_import(data_import: str):
-    return frappe.get_doc("Tor Attendance Import", data_import).start_import()
+def form_start_import(doc_name: str):
+    return frappe.get_doc("Tor Attendance Import", doc_name).start_import()
 
 
-def start_import(data_import):
-    data_import = frappe.get_doc("Tor Attendance Import", data_import)
-    # try:
-    # 	i = Importer(data_import.reference_doctype, data_import=data_import)
-    # 	i.import_data()
-    # except JobTimeoutException:
-    # 	frappe.db.rollback()
-    # 	data_import.db_set("status", "Timed Out")
-    # except Exception:
-    # 	frappe.db.rollback()
-    # 	data_import.db_set("status", "Error")
-    # 	data_import.log_error("Data import failed")
-    # finally:
-    # 	frappe.flags.in_import = False
-
-    frappe.publish_realtime("data_import_refresh", {"data_import": data_import.name})
+def progress(prog: int, desc: str):
+    frappe.publish_realtime(
+        "data_import_progress", {"progress": prog, "description": desc}
+    )

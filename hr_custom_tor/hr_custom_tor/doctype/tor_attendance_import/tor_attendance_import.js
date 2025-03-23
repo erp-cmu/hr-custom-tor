@@ -4,14 +4,33 @@
 frappe.ui.form.on("Tor Attendance Import", {
   setup(frm) {
     console.log("setup");
+    // Setup custom function
     frm.has_import_file = () => {
       return Boolean(frm.doc.checkin_file);
     };
+
+    // Set up progress bar
+    frappe.realtime.on("data_import_progress", (data) => {
+      console.log("real_time", data);
+
+      frm.dashboard.show_progress(
+        "Importing Data",
+        data.progress,
+        data.description
+      );
+
+      if (data.progress === 100) {
+        setTimeout(() => {
+          // frm.reload_doc();
+        }, 500);
+      }
+    });
   },
+
   refresh(frm) {
-    console.log(frm);
-    console.log("refresh");
+    console.log("refresh", frm);
     frm.refresh_fields();
+    frm.trigger("update_primary_action");
   },
 
   onload_post_render(frm) {
@@ -29,7 +48,7 @@ frappe.ui.form.on("Tor Attendance Import", {
     frm
       .call({
         method: "form_start_import",
-        args: { data_import: frm.doc.name },
+        args: { doc_name: frm.doc.name },
         btn: frm.page.btn_primary,
       })
       .then((r) => {
@@ -39,8 +58,14 @@ frappe.ui.form.on("Tor Attendance Import", {
   },
 
   update_primary_action(frm) {
-    console.log({ frm, is_new: frm.is_new() });
-    console.log("update_primary_action");
+    console.log({
+      _where: "update_primary_section",
+      frm,
+      is_new: frm.is_new(),
+      status: frm.doc.status,
+      has_import: frm.has_import_file(),
+    });
+    // console.log("update_primary_action");
     // if (frm.is_dirty()) {
     //   frm.enable_save();
     //   return;
