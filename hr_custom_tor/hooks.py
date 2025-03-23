@@ -246,13 +246,13 @@ override_doctype_class = {
 
 
 fixtures = [
-    {"doctype": "Custom Field", "filters": [["module", "=", "hr_custom_tor"]]},
-    "Employee",
-    "Shift Type",
-    {
-        "doctype": "Custom Field",
-        "filters": [["name", "in", ("Leave Application-custom_hours",)]],
-    },
+    # {
+    #     "doctype": "Custom Field",
+    #     "filters": [["name", "in", ("Leave Application-custom_hours",)]],
+    # },
+    # "Employee",
+    # "Shift Type",
+    {"doctype": "Custom Field", "filters": [["module", "=", "Hr Custom Tor"]]},
     {
         "doctype": "Property Setter",
         "filters": [["name", "in", ("Leave Application-total_leave_days-precision",)]],
