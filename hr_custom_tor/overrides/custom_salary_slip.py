@@ -3,6 +3,7 @@ import frappe
 # from frappe.utils.nestedset import NestedSet
 from erpnext.controllers.status_updater import validate_status
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
+import requests
 
 
 class CustomSalarySlip(SalarySlip):
@@ -16,6 +17,29 @@ class CustomSalarySlip(SalarySlip):
     @frappe.whitelist()
     def get_emp_and_working_day_details(self):
         super().get_emp_and_working_day_details()
+
+        # r = requests.post(
+        #     "http://localhost:8000/api/method/calc_salary", json={"name": "nirand"}
+        # )
+
+        # frappe.msgprint(r.json())
+
+        # try:
+        # Function definition
+        # def script_calculate_salary(self):
+        #     return None
+
+        lc = {}
+        sc = frappe.get_doc("Server Script", "Calculate Salary")
+        exec(sc.script, locals(), lc)
+
+        amount = lc["amount"]
+
+        # amount = script_calculate_salary(self)
+        # amount = calc_amount()
+        frappe.msgprint(str(amount))
+        # except Exception:
+        #     frappe.throw("Error executing server script")
 
         sd = frappe.get_doc(
             {

@@ -257,4 +257,5 @@ fixtures = [
         "doctype": "Property Setter",
         "filters": [["name", "in", ("Leave Application-total_leave_days-precision",)]],
     },
+    {"doctype": "Server Script", "filters": [["name", "in", ("Calculate Salary")]]},
 ]

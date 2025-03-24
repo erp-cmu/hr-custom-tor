@@ -1,0 +1,21 @@
+[
+ {
+  "allow_guest": 0,
+  "api_method": "calc_salary",
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "Before Insert",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2025-03-24 06:18:46.687488",
+  "module": "Hr Custom Tor",
+  "name": "Calculate Salary",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": null,
+  "script": "if self.employee_name == \"EMPA\":\n    amount = 250\nelse:\n    amount = 200",
+  "script_type": "API"
+ }
+]
