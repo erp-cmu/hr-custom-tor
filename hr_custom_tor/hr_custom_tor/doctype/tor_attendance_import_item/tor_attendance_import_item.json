@@ -10,7 +10,16 @@
   "column_break_xqwj",
   "fullname",
   "column_break_etyy",
-  "date"
+  "date",
+  "section_break_gvcl",
+  "is_weekend",
+  "is_holiday",
+  "is_special_holiday",
+  "is_working_day",
+  "in",
+  "out",
+  "incomplete_in_out",
+  "checkin_times"
  ],
  "fields": [
   {
@@ -40,12 +49,61 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Date"
+  },
+  {
+   "fieldname": "section_break_gvcl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_working_day",
+   "fieldtype": "Check",
+   "label": "Is Working Day"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_weekend",
+   "fieldtype": "Check",
+   "label": "Is Weekend"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_holiday",
+   "fieldtype": "Check",
+   "label": "Is Holiday"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_special_holiday",
+   "fieldtype": "Check",
+   "label": "Is Speical Holiday"
+  },
+  {
+   "fieldname": "checkin_times",
+   "fieldtype": "JSON",
+   "label": "Chekin Times"
+  },
+  {
+   "fieldname": "in",
+   "fieldtype": "Time",
+   "label": "In"
+  },
+  {
+   "fieldname": "out",
+   "fieldtype": "Time",
+   "label": "Out"
+  },
+  {
+   "default": "0",
+   "fieldname": "incomplete_in_out",
+   "fieldtype": "Check",
+   "label": "Incomplete In/Out"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-15 10:29:18.677744",
+ "modified": "2025-04-01 14:13:35.368114",
  "modified_by": "Administrator",
  "module": "Hr Custom Tor",
  "name": "Tor Attendance Import Item",

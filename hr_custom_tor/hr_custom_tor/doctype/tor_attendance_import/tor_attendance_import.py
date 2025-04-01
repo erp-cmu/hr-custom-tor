@@ -10,6 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import get_site_path, now, getdate
 import pandas as pd
 from hr_custom_tor.services.hr import findEmployee
+from hr_custom_tor.services.attendance import processCheckInDF
 
 
 def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
@@ -114,13 +115,33 @@ def import_from_checkin_file(doc):
         frappe.throw(title="Error", msg="This file does not exist")
 
     try:
-        df = pd.read_excel(filepath)
+        dfr = pd.read_excel(filepath)
     except Exception:
         frappe.throw(title="Error", msg="Cannot read excel file.")
 
-    def createAttendance(row):
-        date = row["Date"]
-        employeeStr = row["Employee"]
+    # Get Holiday
+    thisYear = now()[:4]  # i.e. 2025
+    holidays = frappe.get_all(
+        "Holiday",
+        filters={"parent": thisYear},
+        fields=["holiday_date", "description"],
+        as_list=True,
+    )
+
+    if len(holidays) == 0:
+        frappe.throw(f"Cannot find holiday name {thisYear}")
+
+    dfHoliday = pd.DataFrame.from_dict(holidays)
+    dfHoliday.columns = ["date", "description"]
+    dfHoliday["date"] = pd.to_datetime(dfHoliday["date"]).dt.strftime("%Y-%m-%d")
+    dfHoliday = dfHoliday.sort_values(by="date", ascending=True).reset_index(drop=True)
+
+    dfgm = processCheckInDF(dfr, dfHoliday)
+
+    def createAttendanceItem(row):
+        row = row.fillna(False)  # Default all to Faklse
+        date = row["date"]
+        employeeStr = row["name"]
         employee = findEmployee(employeeStr, get_doc=True)
         if not employee:
             frappe.throw(f"Cannot find employee for '{employeeStr}'")
@@ -132,12 +153,20 @@ def import_from_checkin_file(doc):
                 "employee": employee.name,
                 "fullname": employee.employee_name,
                 "date": getdate(date, parse_day_first=True),
+                "is_weekend": row["isWeekend"],
+                "is_holiday": row["isHoliday"],
+                "is_special_holiday": row["isSpecialHoliday"],
+                "is_working_day": row["isWorkingDay"],
+                "in": row["in"],
+                "out": row["out"],
+                "checkin_times": row["checkinTimes"],
             }
         )
         doc.append("attendance_data", item)
         pass
 
-    df.apply(createAttendance, axis=1)
+    filt = dfgm["markAttendance"]
+    dfgm[filt].apply(createAttendanceItem, axis=1)
 
     pass
 
@@ -148,27 +177,27 @@ def inject_attendance(self):
         attDate = getdate(attItem.date)
         lateTime = 200
 
-        name = frappe.db.exists(
-            "Attendance",
-            {
-                "employee": employeeName,
-                "attendance_date": attDate,
-            },
-        )
-        if name:
-            frappe.db.set_value("Attendance", name, "custom_late_time", lateTime)
-        else:
-            newAtt = frappe.get_doc(
-                {
-                    "doctype": "Attendance",
-                    "employee": employeeName,
-                    "attendance_date": attDate,
-                    "custom_late_time": lateTime,
-                    "status": "Present",
-                    "docstatus": 1,
-                }
-            )
-            newAtt.insert()
+        # name = frappe.db.exists(
+        #     "Attendance",
+        #     {
+        #         "employee": employeeName,
+        #         "attendance_date": attDate,
+        #     },
+        # )
+        # if name:
+        #     frappe.db.set_value("Attendance", name, "custom_late_time", lateTime)
+        # else:
+        #     newAtt = frappe.get_doc(
+        #         {
+        #             "doctype": "Attendance",
+        #             "employee": employeeName,
+        #             "attendance_date": attDate,
+        #             "custom_late_time": lateTime,
+        #             "status": "Present",
+        #             "docstatus": 1,
+        #         }
+        #     )
+        #     newAtt.insert()
 
 
 @frappe.whitelist()
