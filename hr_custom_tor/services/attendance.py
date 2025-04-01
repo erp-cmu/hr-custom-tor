@@ -107,8 +107,8 @@ def processCheckInDF(dfr, dfHoliday):
         deltaOut = timedelta(hours=timeOut.hour, minutes=timeOut.minute)
         return (deltaOut - deltaIn).total_seconds() / 60
 
-    dfr["workingDuration"] = dfr.apply(calWorkingDuration, axis=1)
-    dfr["overWorkMin"] = dfr["workingDuration"] - (9 * 60)
+    dfr["workingDurationMin"] = dfr.apply(calWorkingDuration, axis=1)
+    dfr["overworkMin"] = dfr["workingDurationMin"] - (9 * 60)
 
     # Holiday list
     dfHoliday["date"] = pd.to_datetime(dfHoliday["date"])

@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2025-03-15 10:27:33.248845",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,15 +12,32 @@
   "fullname",
   "column_break_etyy",
   "date",
+  "column_break_aoci",
+  "description",
   "section_break_gvcl",
-  "is_weekend",
-  "is_holiday",
-  "is_special_holiday",
   "is_working_day",
+  "is_holiday",
+  "is_weekend",
+  "is_special_holiday",
+  "is_present",
+  "is_absent",
+  "is_present_on_working_day",
+  "is_absent_on_working_day",
+  "is_present_on_holiday_weekend",
+  "mark_attendance",
+  "column_break_eynq",
   "in",
   "out",
+  "checkin_times",
   "incomplete_in_out",
-  "checkin_times"
+  "is_in_late",
+  "is_out_early",
+  "in_late_min",
+  "out_early_min",
+  "working_duration_min",
+  "overwork_min",
+  "section_break_enka",
+  "naming_series"
  ],
  "fields": [
   {
@@ -34,6 +52,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "columns": 1,
    "fetch_from": "employee.employee_name",
    "fieldname": "fullname",
    "fieldtype": "Data",
@@ -45,6 +64,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "columns": 2,
    "fieldname": "date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -55,33 +75,42 @@
    "fieldtype": "Section Break"
   },
   {
+   "columns": 1,
    "default": "0",
    "fieldname": "is_working_day",
    "fieldtype": "Check",
-   "label": "Is Working Day"
+   "in_list_view": 1,
+   "label": "Is Working Day",
+   "read_only": 1
   },
   {
    "default": "0",
    "fieldname": "is_weekend",
    "fieldtype": "Check",
-   "label": "Is Weekend"
+   "label": "Is Weekend",
+   "read_only": 1
   },
   {
    "default": "0",
    "fieldname": "is_holiday",
    "fieldtype": "Check",
-   "label": "Is Holiday"
+   "label": "Is Holiday",
+   "read_only": 1
   },
   {
    "default": "0",
    "fieldname": "is_special_holiday",
    "fieldtype": "Check",
-   "label": "Is Speical Holiday"
+   "label": "Is Speical Holiday",
+   "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "checkin_times",
    "fieldtype": "JSON",
-   "label": "Chekin Times"
+   "in_list_view": 1,
+   "label": "Checkin Times",
+   "max_height": "80px"
   },
   {
    "fieldname": "in",
@@ -98,15 +127,115 @@
    "fieldname": "incomplete_in_out",
    "fieldtype": "Check",
    "label": "Incomplete In/Out"
+  },
+  {
+   "fieldname": "column_break_eynq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_in_late",
+   "fieldtype": "Check",
+   "label": "Is In Late"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_out_early",
+   "fieldtype": "Check",
+   "label": "Is Out Early"
+  },
+  {
+   "fieldname": "in_late_min",
+   "fieldtype": "Float",
+   "label": "In Late (Min)"
+  },
+  {
+   "fieldname": "out_early_min",
+   "fieldtype": "Float",
+   "label": "Out Early (Min)"
+  },
+  {
+   "fieldname": "overwork_min",
+   "fieldtype": "Float",
+   "label": "Overwork (Min)"
+  },
+  {
+   "fieldname": "working_duration_min",
+   "fieldtype": "Float",
+   "label": "Working Duration (Min)"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_present",
+   "fieldtype": "Check",
+   "label": "Is Present",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_absent",
+   "fieldtype": "Check",
+   "label": "Is Absent",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_present_on_working_day",
+   "fieldtype": "Check",
+   "label": "Is Present on Working Day",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_absent_on_working_day",
+   "fieldtype": "Check",
+   "label": "Is Absent on Working Day",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "mark_attendance",
+   "fieldtype": "Check",
+   "label": "Mark Attendance"
+  },
+  {
+   "fieldname": "section_break_enka",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "TOR-ATT-ITEM-.YY.-.MM.-.DD.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "TOR-ATT-ITEM-.YY.-.MM.-.DD.-.####"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_present_on_holiday_weekend",
+   "fieldtype": "Check",
+   "label": "Is Present on Holiday / Weekend",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_aoci",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-01 14:13:35.368114",
+ "modified": "2025-04-01 19:52:00.229085",
  "modified_by": "Administrator",
  "module": "Hr Custom Tor",
  "name": "Tor Attendance Import Item",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

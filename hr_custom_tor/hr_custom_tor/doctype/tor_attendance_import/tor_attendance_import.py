@@ -120,16 +120,17 @@ def import_from_checkin_file(doc):
         frappe.throw(title="Error", msg="Cannot read excel file.")
 
     # Get Holiday
-    thisYear = now()[:4]  # i.e. 2025
+    # thisYear = now()[:4]  # i.e. 2025
+    # thisYear = "2024"
     holidays = frappe.get_all(
         "Holiday",
-        filters={"parent": thisYear},
+        filters={"parent": doc.holiday},
         fields=["holiday_date", "description"],
         as_list=True,
     )
 
     if len(holidays) == 0:
-        frappe.throw(f"Cannot find holiday name {thisYear}")
+        frappe.throw("Cannot find holiday")
 
     dfHoliday = pd.DataFrame.from_dict(holidays)
     dfHoliday.columns = ["date", "description"]
@@ -153,13 +154,29 @@ def import_from_checkin_file(doc):
                 "employee": employee.name,
                 "fullname": employee.employee_name,
                 "date": getdate(date, parse_day_first=True),
+                "description": row["description"],
+                #
                 "is_weekend": row["isWeekend"],
                 "is_holiday": row["isHoliday"],
                 "is_special_holiday": row["isSpecialHoliday"],
                 "is_working_day": row["isWorkingDay"],
+                "is_present": row["isPresent"],
+                "is_absent": row["isAbsent"],
+                "is_present_on_working_day": row["isPresentOnWorkingDay"],
+                "is_absent_on_working_day": row["isAbsentOnWorkingDay"],
+                "is_present_on_holiday_weekend": row["isPresentOnHolidayWeekend"],
+                "mark_attendance": row["markAttendance"],
+                #
                 "in": row["in"],
                 "out": row["out"],
+                "incomplete_in_out": row["incompleteInOut"],
                 "checkin_times": row["checkinTimes"],
+                "is_in_late": row["isInLate"],
+                "is_out_early": row["isOutEarly"],
+                "in_late_min": row["inLateMin"],
+                "out_early_min": row["outEarlyMin"],
+                "working_duration_min": row["workingDurationMin"],
+                "overwork_min": row["overworkMin"],
             }
         )
         doc.append("attendance_data", item)
@@ -175,29 +192,41 @@ def inject_attendance(self):
     for attItem in self.attendance_data:
         employeeName = attItem.employee
         attDate = getdate(attItem.date)
-        lateTime = 200
+        status = "Present" if bool(attItem.is_present) else "Absent"
 
-        # name = frappe.db.exists(
-        #     "Attendance",
-        #     {
-        #         "employee": employeeName,
-        #         "attendance_date": attDate,
-        #     },
-        # )
-        # if name:
-        #     frappe.db.set_value("Attendance", name, "custom_late_time", lateTime)
-        # else:
-        #     newAtt = frappe.get_doc(
-        #         {
-        #             "doctype": "Attendance",
-        #             "employee": employeeName,
-        #             "attendance_date": attDate,
-        #             "custom_late_time": lateTime,
-        #             "status": "Present",
-        #             "docstatus": 1,
-        #         }
-        #     )
-        #     newAtt.insert()
+        name = frappe.db.exists(
+            "Attendance",
+            {"employee": employeeName, "attendance_date": attDate, "docstatus": 1},
+        )
+        if name:
+            statusOld = frappe.db.get_values("Attendance", name, "status")
+            if statusOld != "Half Day":
+                statusNew = status
+            else:
+                statusNew = statusOld
+            frappe.db.set_value(
+                "Attendance",
+                name,
+                "custom_import_details",
+                attItem.as_json(),
+                "custom_import_reference",
+                attItem.name,
+                status,
+                statusNew,
+            )
+        else:
+            newAtt = frappe.get_doc(
+                {
+                    "doctype": "Attendance",
+                    "employee": employeeName,
+                    "attendance_date": attDate,
+                    "status": status,
+                    "docstatus": 1,
+                    "custom_import_details": attItem.as_json(),
+                    "custom_import_reference": attItem.name,
+                }
+            )
+            newAtt.insert()
 
 
 @frappe.whitelist()

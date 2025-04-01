@@ -9,6 +9,7 @@
   "section_break_atjn",
   "amended_from",
   "naming_series",
+  "holiday",
   "checkin_file",
   "status",
   "section_break_gfsf",
@@ -59,12 +60,20 @@
    "label": "Status",
    "options": "PENDING\nSUCCESS\nPARTIAL_SUCCESS",
    "read_only": 1
+  },
+  {
+   "fieldname": "holiday",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Holiday",
+   "options": "Holiday List",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-16 08:11:41.035047",
+ "modified": "2025-04-01 20:43:16.666528",
  "modified_by": "Administrator",
  "module": "Hr Custom Tor",
  "name": "Tor Attendance Import",
@@ -72,6 +81,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -80,6 +91,7 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1
