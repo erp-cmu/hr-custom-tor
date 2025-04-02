@@ -49,6 +49,17 @@ def processCheckInDF(dfr, dfHoliday):
     dfr[filtOutsideRange]
     dfr = dfr[~filtOutsideRange]
 
+    # Remove duplicates times
+    def checkDuplicates(_sr):
+        sr = _sr[~_sr.duplicated()]
+        timeArr = sr.values
+        timeArrPadded = [pd.NaT for i in range(len(timeCols))]
+        for idx, val in enumerate(timeArr):
+            timeArrPadded[idx] = val
+        return pd.Series(timeArrPadded, index=timeCols)
+
+    dfr[timeCols] = dfr[timeCols].apply(checkDuplicates, axis=1)
+
     # Check incomplete check-in/out
     dfr["incompleteInOut"] = False
     filtOneCheckIn = (~dfr[timeCols].isnull()).sum(axis=1) == 1
@@ -99,6 +110,9 @@ def processCheckInDF(dfr, dfHoliday):
         return earlyMon
 
     dfr["outEarlyMin"] = dfr["out"].apply(calOutEarlyMin)
+
+    # Total late minutes
+    dfr["lateMin"] = dfr["inLateMin"] + dfr["outEarlyMin"]
 
     def calWorkingDuration(row):
         timeIn = row["in"]

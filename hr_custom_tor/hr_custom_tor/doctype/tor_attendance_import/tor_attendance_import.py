@@ -101,7 +101,11 @@ class TorAttendanceImport(Document):
             import_from_checkin_file(self)
             self.status = "SUCCESS"
             progress(100, "Finish")
-        except Exception:
+        except Exception as e:
+            frappe.throw(
+                f"Error handling attachment: {str(e)}",
+                "Attachment Handling Exception",
+            )
             frappe.db.rollback()
             self.status = "PENDING"
         finally:
@@ -126,14 +130,14 @@ def import_from_checkin_file(doc):
         "Holiday",
         filters={"parent": doc.holiday},
         fields=["holiday_date", "description"],
-        as_list=True,
+        as_list=False,
     )
-
     if len(holidays) == 0:
         frappe.throw("Cannot find holiday")
-
-    dfHoliday = pd.DataFrame.from_dict(holidays)
-    dfHoliday.columns = ["date", "description"]
+    # Need to convert frappe._dict to ordinary dict
+    holidaysDict = [dict(h) for h in holidays]
+    dfHoliday = pd.DataFrame.from_dict(holidaysDict)
+    dfHoliday = dfHoliday.rename(columns={"holiday_date": "date"})
     dfHoliday["date"] = pd.to_datetime(dfHoliday["date"]).dt.strftime("%Y-%m-%d")
     dfHoliday = dfHoliday.sort_values(by="date", ascending=True).reset_index(drop=True)
 

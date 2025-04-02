@@ -34,6 +34,7 @@
   "is_out_early",
   "in_late_min",
   "out_early_min",
+  "late_min",
   "working_duration_min",
   "overwork_min",
   "section_break_enka",
@@ -226,18 +227,24 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Description"
+  },
+  {
+   "fieldname": "late_min",
+   "fieldtype": "Float",
+   "label": "Late (Min)"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-01 19:52:00.229085",
+ "modified": "2025-04-02 13:14:19.854828",
  "modified_by": "Administrator",
  "module": "Hr Custom Tor",
  "name": "Tor Attendance Import Item",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
