@@ -207,12 +207,12 @@ def inject_attendance(self):
             frappe.db.set_value(
                 "Attendance",
                 name,
-                "custom_import_details",
-                attItem.as_json(),
-                "custom_import_reference",
-                attItem.name,
-                status,
-                statusNew,
+                {
+                    "custom_import_reference": self.name,
+                    "custom_reference_item_index": attItem.idx,
+                    "custom_import_details": attItem.as_json(),
+                    "status": statusNew,
+                },
             )
         else:
             newAtt = frappe.get_doc(
@@ -222,8 +222,9 @@ def inject_attendance(self):
                     "attendance_date": attDate,
                     "status": status,
                     "docstatus": 1,
+                    "custom_reference_item_index": attItem.idx,
+                    "custom_import_reference": self.name,
                     "custom_import_details": attItem.as_json(),
-                    "custom_import_reference": attItem.name,
                 }
             )
             newAtt.insert()
