@@ -193,7 +193,6 @@ def execute(filters=None):
     filterAtt = {
         "attendance_date": ["between", [startDate, endDate]],
         "docstatus": 1,
-        "employee": ["in", ["HR-EMP-00001", "HR-EMP-00002"]],
     }
 
     if len(employeeNames) > 0:
