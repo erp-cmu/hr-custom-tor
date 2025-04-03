@@ -178,6 +178,7 @@ def import_from_checkin_file(doc):
                 "is_in_late": row["isInLate"],
                 "is_out_early": row["isOutEarly"],
                 "in_late_min": row["inLateMin"],
+                "late_min": row["lateMin"],
                 "out_early_min": row["outEarlyMin"],
                 "working_duration_min": row["workingDurationMin"],
                 "overwork_min": row["overworkMin"],
