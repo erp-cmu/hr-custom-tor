@@ -6,6 +6,78 @@ from frappe.utils import get_site_path, now, getdate
 import pandas as pd
 import json
 import numpy as np
+from hr_custom_tor.services.date import getDfHoliday, getDateRange
+
+colsJson = [
+    "checkin_times",
+    "date",
+    "description",
+    "employee",
+    "fullname",
+    "idx",
+    "in",
+    "in_late_min",
+    "incomplete_in_out",
+    "is_absent",
+    "is_absent_on_working_day",
+    "is_holiday",
+    "is_in_late",
+    "is_out_early",
+    "is_present",
+    "is_present_on_holiday_weekend",
+    "is_present_on_working_day",
+    "is_special_holiday",
+    "is_weekend",
+    "is_working_day",
+    "late_min",
+    "mark_attendance",
+    "out",
+    "out_early_min",
+    "overwork_min",
+    "working_duration_min",
+]
+
+# Blank data in case the attendance item does not have json.
+blankDict = {
+    "__unsaved": 1,
+    "checkin_times": [],
+    "creation": "",
+    "date": "",
+    "description": "",
+    "docstatus": 1,
+    "doctype": "Tor Attendance Import Item",
+    "employee": "",
+    "fullname": "",
+    "idx": -1,
+    "in": "",
+    "in_late_min": 0.0,
+    "incomplete_in_out": 0,
+    "is_absent": 0,
+    "is_absent_on_working_day": 0,
+    "is_holiday": np.nan,
+    "is_in_late": 0,
+    "is_out_early": 0,
+    "is_present": 0,
+    "is_present_on_holiday_weekend": 0,
+    "is_present_on_working_day": 0,
+    "is_special_holiday": np.nan,
+    "is_weekend": np.nan,
+    "is_working_day": np.nan,
+    "late_min": 0.0,
+    "mark_attendance": 0,
+    "modified": "",
+    "modified_by": "",
+    "name": "",
+    "naming_series": "",
+    "out": "",
+    "out_early_min": 0.0,
+    "overwork_min": 0.0,
+    "owner": "",
+    "parent": "",
+    "parentfield": "",
+    "parenttype": "",
+    "working_duration_min": 0.0,
+}
 
 
 def execute(filters=None):
@@ -132,7 +204,7 @@ def execute(filters=None):
         },
         {
             "fieldname": "is_special_holiday",
-            "label": "is_holiday",
+            "label": "is_special_holiday",
             "fieldtype": "Check" if not isSummary else "Int",
         },
         {
@@ -204,9 +276,14 @@ def execute(filters=None):
         fields=["*"],
     )
     attsDict = [dict(att) for att in atts]
+    
+    # If no attendance is found, exit
+    if len(attsDict) == 0:
+        return columns, []
+    
     _dfAtt = pd.DataFrame.from_dict(attsDict)
     dfJson = _dfAtt["custom_import_details"].apply(
-        lambda x: json.loads(x) if x is not None else {}
+        lambda x: json.loads(x) if x is not None else blankDict
     )
     _dfAttDetails = pd.DataFrame.from_dict(dfJson.values.tolist())
     _dfAttDetails.index = dfJson.index
@@ -214,7 +291,29 @@ def execute(filters=None):
     # There are dupliated columns. Remove.
     dfAtt = dfAtt.loc[:, ~dfAtt.columns.duplicated()].copy()
 
-    # Need more logic to take care of missing values for example, is_working_day needs to be filled in.
+    # Takes care of date details.
+    holidayListName = startDate[:4]
+    dfHoliday = getDfHoliday(holidayListName=holidayListName)
+    dfDateRange = getDateRange(
+        dayStart=pd.to_datetime(startDate).date(),
+        dayEnd=pd.to_datetime(endDate).date(),
+        dfHoliday=dfHoliday,
+        changeBoolToInt=True,
+    )
+
+    def refillMissingDateDetails(row, dfDateRange):
+        cols = ["isHoliday", "isWeekend", "isSpecialHoliday", "isWorkingDay"]
+        _date = row["attendance_date"]        
+        filt = dfDateRange["date"] == _date
+        dfDateRangeFilt = dfDateRange[filt]
+        if dfDateRangeFilt.shape[0] != 1:
+            frappe.throw("Cannot find date range for this date")
+        sr = pd.Series((dfDateRangeFilt[cols].to_dict(orient="records"))[0])
+        return sr
+    
+    cols = ["is_holiday", "is_weekend", "is_special_holiday", "is_working_day"]
+    dfAtt[cols] = dfAtt.apply(lambda row: refillMissingDateDetails(row, dfDateRange), axis=1)
+
     colsNum = ["late_min", "custom_leave_hours"]
     dfAtt[colsNum] = dfAtt[colsNum].fillna(0)
 

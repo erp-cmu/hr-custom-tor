@@ -12,7 +12,7 @@ def findEmployee(searchStr, get_doc=False):
 
 
 def findEmployeeName(searchStr, get_doc=False):
-    searchStr = searchStr.strip()
+    searchStr = searchStr.strip().replace("  ", " ")
 
     name = frappe.db.exists("Employee", {"name": searchStr})
     if name:

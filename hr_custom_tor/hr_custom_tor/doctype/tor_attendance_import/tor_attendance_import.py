@@ -11,7 +11,7 @@ from frappe.utils import get_site_path, now, getdate
 import pandas as pd
 from hr_custom_tor.services.hr import findEmployee
 from hr_custom_tor.services.attendance import processCheckInDF
-
+from hr_custom_tor.services.date import getDfHoliday
 
 def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
     if prefix is None:
@@ -124,34 +124,17 @@ def import_from_checkin_file(doc):
         frappe.throw(title="Error", msg="Cannot read excel file.")
 
     # Get Holiday
-    # thisYear = now()[:4]  # i.e. 2025
-    # thisYear = "2024"
-    holidays = frappe.get_all(
-        "Holiday",
-        filters={"parent": doc.holiday},
-        fields=["holiday_date", "description"],
-        as_list=False,
-    )
-    if len(holidays) == 0:
-        frappe.throw("Cannot find holiday")
-    # Need to convert frappe._dict to ordinary dict
-    holidaysDict = [dict(h) for h in holidays]
-    dfHoliday = pd.DataFrame.from_dict(holidaysDict)
-    dfHoliday = dfHoliday.rename(columns={"holiday_date": "date"})
-    dfHoliday["date"] = pd.to_datetime(dfHoliday["date"]).dt.strftime("%Y-%m-%d")
-    dfHoliday = dfHoliday.sort_values(by="date", ascending=True).reset_index(drop=True)
+    dfHoliday = getDfHoliday(holidayListName=doc.holiday)
 
     dfgm = processCheckInDF(dfr, dfHoliday)
 
     def createAttendanceItem(row):
-        row = row.fillna(False)  # Default all to Faklse
+        row = row.fillna(False)  # Default all to False
         date = row["date"]
         employeeStr = row["name"]
         employee = findEmployee(employeeStr, get_doc=True)
         if not employee:
             frappe.throw(f"Cannot find employee for '{employeeStr}'")
-        # if employee:
-        #     fullname = frappe.db.get_value("Employee", employeeId, "employee_name") or ""
         item = frappe.get_doc(
             {
                 "doctype": "Tor Attendance Import Item",
