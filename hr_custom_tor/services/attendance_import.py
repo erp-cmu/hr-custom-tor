@@ -112,8 +112,9 @@ def processCheckInDF(dfr, dfHoliday):
 
     dfr["outEarlyMin"] = dfr["out"].apply(calOutEarlyMin)
 
+    # Note: I will leave this logic for later since some company define late min differently.
     # Total late minutes
-    dfr["lateMin"] = dfr["inLateMin"] + dfr["outEarlyMin"]
+    # dfr["lateMin"] = dfr["inLateMin"] + dfr["outEarlyMin"]
 
     def calWorkingDuration(row):
         timeIn = row["in"]

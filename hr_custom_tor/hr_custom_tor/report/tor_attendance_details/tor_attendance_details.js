@@ -1,6 +1,19 @@
 // Copyright (c) 2025, IECMU and contributors
 // For license information, please see license.txt
 
+function pad(num, size) {
+  num = num.toString();
+  while (num.length < size) num = "0" + num;
+  return num;
+}
+
+function fmt(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // Zero index
+  const day = date.getDate();
+  return `${year}-${pad(month,2)}-${pad(day,2)}`; //Format to yyyy-mm-dd
+}
+
 frappe.query_reports["Tor Attendance Details"] = {
   filters: [
     {
@@ -11,29 +24,34 @@ frappe.query_reports["Tor Attendance Details"] = {
       wildcard_filter: 0,
 
       on_change: function (query_report) {
-
-        const is_whole_month = query_report.get_filter_value("is_whole_month")
+        const is_whole_month = query_report.get_filter_value("is_whole_month");
 
         if (!is_whole_month) {
-          return
+          return;
         }
 
-        const start_date = query_report.get_filter_value("start_date")
+        const start_date = query_report.get_filter_value("start_date");
         const date = new Date(start_date);
 
         // Get first and last day of the month
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
         const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-        const fmt = (date) => date.toISOString().split('T')[0] // Format to yyyy-mm-dd
-
         query_report.set_filter_value("start_date", fmt(firstDay));
         query_report.set_filter_value("end_date", fmt(lastDay));
-        // console.log({firstDay, lastDay, query_report});
+        // console.log({
+        //   start_date,
+        //   fd: fmt(firstDay),
+        //   ld: fmt(lastDay),
+        //   query_report,
+        // });
 
-        const monthStr = date.toLocaleString('default', { month: 'long' });
+        const monthStr = date.toLocaleString("default", { month: "long" });
         const year = date.getFullYear();
-        frappe.show_alert(`The start and end date has been set to the month of ${monthStr} ${year}`, 5);
+        frappe.show_alert(
+          `The start and end date has been set to the month of ${monthStr} ${year}`,
+          5
+        );
 
         // Without this the report will be stale
         query_report.refresh();
@@ -49,7 +67,7 @@ frappe.query_reports["Tor Attendance Details"] = {
       fieldname: "end_date",
       fieldtype: "Date",
       label: "End Date",
-      read_only: 0,
+      read_only: 1,
       mandatory: 1,
       wildcard_filter: 0,
     },
@@ -86,7 +104,7 @@ frappe.query_reports["Tor Attendance Details"] = {
       label: "เลือกทั้งเดือน",
       fieldtype: "Check",
       mandatory: 0,
-      default: "0",
+      default: "1",
     },
   ],
 };

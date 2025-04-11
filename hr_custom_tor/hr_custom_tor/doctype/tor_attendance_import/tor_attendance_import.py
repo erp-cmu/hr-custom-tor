@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import get_site_path, now, getdate
 import pandas as pd
 from hr_custom_tor.services.hr import findEmployee
-from hr_custom_tor.services.attendance import processCheckInDF
+from hr_custom_tor.services.attendance_import import processCheckInDF
 from hr_custom_tor.services.date import getDfHoliday
 
 def insert_file_suffix_prefix(fname, suffix=None, prefix=None):
