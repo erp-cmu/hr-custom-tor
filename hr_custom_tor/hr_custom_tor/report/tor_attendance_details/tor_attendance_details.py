@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+
 # import pandas as pd
 # import numpy as np
 from hr_custom_tor.services.attendance_analyze import getDfAtt, getDfAttSummary
@@ -15,7 +16,15 @@ def execute(filters=None):
     employeeNames = filters["employee_names"]
     isSummary = bool(filters.get("is_summary"))
 
-    columnsDetails = [
+    ############################
+    # Attendance information
+    ############################
+    dfAtt = getDfAtt(startDate=startDate, endDate=endDate, employeeNames=employeeNames)
+
+    ############################
+    # Create columns to display
+    ############################
+    columnsBase = [
         {
             "fieldname": "employee",
             "label": "พนักงาน",
@@ -172,7 +181,7 @@ def execute(filters=None):
         },
     ]
 
-    colsToReuse = [
+    colsBaseToSummary = [
         "employee",
         "is_present",
         "is_absent",
@@ -188,23 +197,44 @@ def execute(filters=None):
         "late_min_effective",
         "is_on_leave",
         "custom_leave_hours",
+        "late_major_penalty_count",
+        "late_minor_penalty_min",
+        {
+            "fieldname": "late_major_penalty_daily_pay_ratio",
+            "label": "late_major_penalty_daily_pay_ratio",
+            "fieldtype": "Float",
+        },
+        {
+            "fieldname": "late_minor_penalty_daily_pay_ratio",
+            "label": "late_minor_penalty_daily_pay_ratio",
+            "fieldtype": "Float",
+        },
+        {
+            "fieldname": "late_minor_penalty_thb",
+            "label": "late_minor_penalty_thb",
+            "fieldtype": "Float",
+        },
     ]
     columnsSummary = []
-    for fieldnameQuery in colsToReuse:
-        res = [c for c in columnsDetails if c.get("fieldname") == fieldnameQuery]
-        columnsSummary.append(res[0])
+    for fieldnameQuery in colsBaseToSummary:
+        if isinstance(fieldnameQuery, str):
+            res = [c for c in columnsBase if c.get("fieldname") == fieldnameQuery]
+            columnsSummary.append(res[0])
+        else:
+            columnsSummary.append(fieldnameQuery)
 
     if not isSummary:
-        columns = columnsDetails
+        columns = columnsBase
     else:
         columns = columnsSummary
 
-    dfAtt = getDfAtt(startDate=startDate, endDate=endDate, employeeNames=employeeNames)
-  
-    # If no attendance is found, exit
+    ############################
+    # Output
+    ############################
+    # If no attendance is found, return blank data
     if dfAtt is None:
         return columns, []
-    
+
     if not isSummary:
         data = dfAtt.to_dict(orient="records")
     else:

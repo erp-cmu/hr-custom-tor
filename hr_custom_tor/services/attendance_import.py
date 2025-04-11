@@ -126,37 +126,12 @@ def processCheckInDF(dfr, dfHoliday):
     dfr["workingDurationMin"] = dfr.apply(calWorkingDuration, axis=1)
     dfr["overworkMin"] = dfr["workingDurationMin"] - (9 * 60)
 
-    # Holiday list
-    # dfHoliday["date"] = pd.to_datetime(dfHoliday["date"])
-    # dfHoliday["isHoliday"] = True
-    # dfHoliday["isWeekend"] = dfHoliday["description"].str.contains(
-    #     "Sunday|Saturday", regex=True
-    # )
-    # dfHoliday["isSpecialHoliday"] = ~dfHoliday["isWeekend"]
-    # dfHoliday
-
     # Calculate working day
     workingDayStart = dfr["date"].min()
     workingDayEnd = dfr["date"].max()
-
-    # Get working days range
-    # dateRanges = pd.date_range(start=workingDayStart, end=workingDayEnd)
-    # dfDateRangeTemp = pd.DataFrame(data={"date": dateRanges})
-    # dfDateRangeTemp.head()
-
-    # # Determine holidays
-    # dfDateRange = dfDateRangeTemp.merge(dfHoliday, on="date", how="left")
-    # dfDateRange["description"] = dfDateRange["description"].fillna("")
-    # dfDateRange[["isWeekend", "isHoliday", "isSpecialHoliday"]] = dfDateRange[
-    #     ["isWeekend", "isHoliday", "isSpecialHoliday"]
-    # ].fillna(False)
-    
-    # dfDateRange["isWorkingDay"] = ~dfDateRange["isHoliday"]
-
-    # # Convert datetime to date so that I can merge.
-    # dfDateRange["date"] = dfDateRange["date"].dt.date
-    
-    dfDateRange = getDateRange(dayStart=workingDayStart, dayEnd=workingDayEnd, dfHoliday=dfHoliday)
+    dfDateRange = getDateRange(
+        dayStart=workingDayStart, dayEnd=workingDayEnd, dfHoliday=dfHoliday
+    )
 
     # Merging
     def matchDateRange(_dft):

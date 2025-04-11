@@ -11,10 +11,11 @@ function fmt(date) {
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // Zero index
   const day = date.getDate();
-  return `${year}-${pad(month,2)}-${pad(day,2)}`; //Format to yyyy-mm-dd
+  return `${year}-${pad(month, 2)}-${pad(day, 2)}`; //Format to yyyy-mm-dd
 }
 
 frappe.query_reports["Tor Attendance Details"] = {
+  disable_auto_refresh: 1,
   filters: [
     {
       fieldname: "start_date",
@@ -107,4 +108,21 @@ frappe.query_reports["Tor Attendance Details"] = {
       default: "1",
     },
   ],
+
+  onload: function (query_report) {
+    // Add a refresh button to the toolbar (does not work)
+    // query_report.page.add_inner_button(
+    //   __("Refresh"),
+    //   function () {
+    //     query_report.refresh();
+    //   },
+    //   __("Refresh"),
+    //   "refresh"
+    // );
+  },
+
+  refresh: function (report) {
+    // Any custom logic to run during refresh (does not work)
+    console.log("Report refreshed!");
+  },
 };

@@ -114,7 +114,7 @@ def getDfAtt(startDate: str, endDate: str, employeeNames: list[str]):
         "in_late_min"
     ]  # Note that some company might includes out_early_min
     dfAtt["late_min_effective"] = dfAtt["late_min"] - dfAtt["custom_leave_hours"] * 60
-    
+
     def calculate_late_penalty(row):
         late_min = row["late_min_effective"]
         late_major_penalty_count = 0
@@ -123,7 +123,10 @@ def getDfAtt(startDate: str, endDate: str, employeeNames: list[str]):
             late_major_penalty_count = 1
         else:
             late_minor_penalty_min = late_min
-        return pd.Series([late_major_penalty_count, late_minor_penalty_min], index=["late_major_penalty_count", "late_minor_penalty_min"])
+        return pd.Series(
+            [late_major_penalty_count, late_minor_penalty_min],
+            index=["late_major_penalty_count", "late_minor_penalty_min"],
+        )
 
     dfAtt[["late_major_penalty_count", "late_minor_penalty_min"]] = dfAtt.apply(
         calculate_late_penalty, axis=1
@@ -139,7 +142,6 @@ def getDfAtt(startDate: str, endDate: str, employeeNames: list[str]):
 
 
 def getDfAttSummary(dfAtt):
-
     dfAttSummary = (
         dfAtt.groupby(by=["employee"])
         .agg(
@@ -158,10 +160,25 @@ def getDfAttSummary(dfAtt):
                 "custom_leave_hours": "sum",
                 "late_min_effective": "sum",
                 "is_on_leave": "sum",
+                "late_major_penalty_count": "sum",
+                "late_minor_penalty_min": lambda s: s.sum() if s.sum() > 0 else 0,
             }
         )
         .reset_index()
     )
+
+    dfAttSummary["late_major_penalty_daily_pay_ratio"] = dfAttSummary[
+        "late_major_penalty_count"
+    ].apply(lambda s: s / 3 if s > 3 else 0)
+
+    dfAttSummary["late_minor_penalty_daily_pay_ratio"] = dfAttSummary[
+        "late_minor_penalty_min"
+    ].apply(lambda s: s / 60 if s > 60 else 0)
+
+    dfAttSummary["late_minor_penalty_thb"] = dfAttSummary[
+        "late_minor_penalty_min"
+    ].apply(lambda s: s if s <= 60 else 0)
+
     # Inject "employee_name" so that the "employee" (i.e. EMP-001) columns has "employee_name" (i.e. พี่หนอ) on it. (Something in frappe that makes this happen.)
     dfAttSummary["employee_name"] = dfAttSummary["employee"].apply(
         lambda emp: dfAtt[dfAtt["employee"] == emp]["employee_name"].values[0]
