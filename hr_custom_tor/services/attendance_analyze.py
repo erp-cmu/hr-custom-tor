@@ -64,7 +64,7 @@ def getDfAtt(startDate: str, endDate: str, employeeNames: list[str]):
 
     # If no attendance is found, exit
     if len(attsDict) == 0:
-        return None
+        return None, None
 
     _dfAtt = pd.DataFrame.from_dict(attsDict)
     dfJson = _dfAtt["custom_import_details"].apply(
@@ -106,30 +106,46 @@ def getDfAtt(startDate: str, endDate: str, employeeNames: list[str]):
     colsNum = ["in_late_min", "out_early_min", "custom_leave_hours"]
     dfAtt[colsNum] = dfAtt[colsNum].fillna(0)
 
+    # Logic for leave
     dfAtt["is_on_leave"] = dfAtt["status"].apply(
-        lambda s: 1 if s in ["Half Day", "On Leave"] else 0
+        lambda s: 1 if s in ["On Leave"] else 0
     )
+    dfAtt["is_on_partial_leave"] = dfAtt["status"].apply(
+        lambda s: 1 if s in ["Half Day"] else 0
+    )
+
+    # Mark absent if partial leave and not show up
+    filt = (dfAtt["is_present"] == 0) & (dfAtt["is_on_partial_leave"] == 1)
+    dfAtt.loc[filt[filt].index, "is_absent"] = 1
 
     dfAtt["late_min"] = dfAtt[
         "in_late_min"
     ]  # Note that some company might includes out_early_min
     dfAtt["late_min_effective"] = dfAtt["late_min"] - dfAtt["custom_leave_hours"] * 60
 
-    def calculate_late_penalty(row):
-        late_min = row["late_min_effective"]
-        late_major_penalty_count = 0
-        late_minor_penalty_min = 0
-        if late_min > 10:
-            late_major_penalty_count = 1
-        else:
-            late_minor_penalty_min = late_min
-        return pd.Series(
-            [late_major_penalty_count, late_minor_penalty_min],
-            index=["late_major_penalty_count", "late_minor_penalty_min"],
-        )
+    # def calculate_late_penalty(row):
+    #     late_min = row["late_min_effective"]
+    #     late_major_penalty_count = 0
+    #     late_minor_penalty_min = 0
+    #     if late_min > 10:
+    #         late_major_penalty_count = 1
+    #     else:
+    #         late_minor_penalty_min = late_min
+    #     return pd.Series(
+    #         [late_major_penalty_count, late_minor_penalty_min],
+    #         index=["late_major_penalty_count", "late_minor_penalty_min"],
+    #     )
 
-    dfAtt[["late_major_penalty_count", "late_minor_penalty_min"]] = dfAtt.apply(
-        calculate_late_penalty, axis=1
+    # dfAtt[["late_major_penalty_count", "late_minor_penalty_min"]] = dfAtt.apply(
+    #     calculate_late_penalty, axis=1
+    # )
+
+    dfAtt["late_over_10min_count"] = dfAtt["late_min_effective"].apply(
+        lambda late: 0 if late <= 10 else 1
+    )
+
+    dfAtt["late_min_for_deduct"] = dfAtt["late_min_effective"].apply(
+        lambda late: late if late >= 0 else 0
     )
 
     # dfAtt = dfAtt.fillna(np.nan).replace([np.nan], [None])
@@ -138,17 +154,17 @@ def getDfAtt(startDate: str, endDate: str, employeeNames: list[str]):
     dfAtt = dfAtt.sort_values(
         by=["employee_name", "attendance_date"], ascending=[True, True]
     )
-    return dfAtt
+    return dfAtt, dfDateRange
 
 
-def getDfAttSummary(dfAtt):
+def getDfAttSummary(dfAtt: pd.DataFrame, dfDateRange: pd.DataFrame):
     dfAttSummary = (
         dfAtt.groupby(by=["employee"])
         .agg(
             {
                 "is_present": "sum",
                 "is_absent": "sum",
-                "is_working_day": "sum",
+                # "is_working_day": "sum", // This does not work because attendance might be not recorded every day.
                 "is_present_on_working_day": "sum",
                 "is_present_on_holiday_weekend": "sum",
                 "working_duration_min": lambda s: s.mean(),
@@ -160,24 +176,28 @@ def getDfAttSummary(dfAtt):
                 "custom_leave_hours": "sum",
                 "late_min_effective": "sum",
                 "is_on_leave": "sum",
-                "late_major_penalty_count": "sum",
-                "late_minor_penalty_min": lambda s: s.sum() if s.sum() > 0 else 0,
+                "is_on_partial_leave": "sum",
+                "late_over_10min_count": "sum",
+                "late_min_for_deduct": "sum",
             }
         )
         .reset_index()
     )
 
-    dfAttSummary["late_major_penalty_daily_pay_ratio"] = dfAttSummary[
-        "late_major_penalty_count"
-    ].apply(lambda s: s / 3 if s > 3 else 0)
+    dfAttSummary["is_working_day"] = dfDateRange["isWorkingDay"].sum()
 
-    dfAttSummary["late_minor_penalty_daily_pay_ratio"] = dfAttSummary[
-        "late_minor_penalty_min"
-    ].apply(lambda s: s / 60 if s > 60 else 0)
+    def getDeductNgan(row):
+        d1 = np.floor(row["late_over_10min_count"] / 3)
+        d2 = np.floor(row["late_min_for_deduct"] / 60)
+        return d1 + d2
 
-    dfAttSummary["late_minor_penalty_thb"] = dfAttSummary[
-        "late_minor_penalty_min"
-    ].apply(lambda s: s if s <= 60 else 0)
+    dfAttSummary["deduct_ngan_late"] = dfAttSummary.apply(getDeductNgan, axis=1)
+
+    def getDuductNganAbsent(row):
+        count = row["is_working_day"] - (row["is_on_leave"] + row["is_present"])
+        return count if count > 0 else 0
+
+    dfAttSummary["duduct_ngan_absent"] = dfAttSummary.apply(getDuductNganAbsent, axis=1)
 
     # Inject "employee_name" so that the "employee" (i.e. EMP-001) columns has "employee_name" (i.e. พี่หนอ) on it. (Something in frappe that makes this happen.)
     dfAttSummary["employee_name"] = dfAttSummary["employee"].apply(

@@ -107,6 +107,13 @@ frappe.query_reports["Tor Attendance Details"] = {
       mandatory: 0,
       default: "1",
     },
+    {
+      fieldname: "is_dev",
+      label: "Developer Mode",
+      fieldtype: "Check",
+      mandatory: 0,
+      default: "0",
+    },
   ],
 
   onload: function (query_report) {
