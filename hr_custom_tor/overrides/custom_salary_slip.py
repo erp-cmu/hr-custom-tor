@@ -87,6 +87,9 @@ class CustomSalarySlip(SalarySlip):
         dfAtt, dfDateRange = getDfAtt(
             startDate=startDateStr, endDate=endDateStr, employeeNames=employeeNames
         )
+        if dfAtt is None:
+            frappe.msgprint("No attendance found.")
+            return
         dfAttSummary = getDfAttSummary(dfAtt=dfAtt, dfDateRange=dfDateRange)
         srAttSummary = dfAttSummary.iloc[0, :]
 
@@ -105,30 +108,40 @@ class CustomSalarySlip(SalarySlip):
         nganLateCount = cint(srAttSummary["deduct_ngan_late"])
         lateNgan = flt(ngan * nganLateCount, precision=2)
         lateMin = 1 * cint(srAttSummary["late_min_for_deduct"])
-        self.updateSalaryDetails("LATE", lateNgan + lateMin)
+        lateUpdateAmount = lateNgan + lateMin
+        self.updateSalaryDetails("LATE", lateUpdateAmount)
 
-        socialUpdate = 0.05 * baseSalary if baseSalary < 15000 else 0.05 * 15000
-        self.updateSalaryDetails("SOCIAL", socialUpdate)
+        socialUpdateAmount = 0.05 * baseSalary if baseSalary < 15000 else 0.05 * 15000
+        self.updateSalaryDetails("SOCIAL", socialUpdateAmount)
 
-        salaryCalc = f"""
+        salaryCalc = f"""-----------------------------------
+ข้อมูล
+- วันทำงาน = {srAttSummary["is_working_day"]} วัน
+- ลาเต็มวัน = {srAttSummary["is_on_leave"]} วัน
+- เข้างาน = {srAttSummary["is_present"]} วัน
+- ขาดงาน = วันทำงาน - (เข้างาน + ลาเด็มวัน) = {absentCount} วัน
+- มาทำงานในวันทำงาน = {presentOnWorkingDayCount} วัน
 -----------------------------------
 - เงินเดือน = {baseSalary} บาท
 - งาน = {ngan} บาท 
 - ค่าอาหารกลางวัน = {lunch} บาท (ต่อวัน)
 -----------------------------------
-เพิ่มเงินเดือน
-1) ค่าอาหารกลางวัน 
-- มาทำงานในวันทำงาน {presentOnWorkingDayCount} วัน
-- เพิ่มเงิน {presentOnWorkingDayCount} x {lunch} = {lunchAmountUpdated} บาท
+การเพิ่มเงินเดือน
+1) ค่าอาหารกลางวัน
+- จำนวนวันที่มาทำงานในวันทำงาน x ค่าอาหารกลางวัน
+- {presentOnWorkingDayCount} x {lunch} = {lunchAmountUpdated} บาท
 -----------------------------------
-หักเงินเดือน
-1) เข้างานไม่ครบ
-- เข้างานไม่ครบ {absentCount} วัน
-- หักเงิน {absentCount} x {ngan} = {absentAmountUpdated} บาท
-2) เกินเวลา / มาสาย
+การหักเงินเดือน
+1) ประกันสังคม
+- 5% ของฐานเงินเดือน (คิดเงินเดือนมากที่สุด 15000 บาท)
+- 0.05 x {baseSalary if baseSalary < 15000 else 15000} = {socialUpdateAmount} บาท
+2) เข้างานไม่ครบ
+- จำนวนวันที่ขาดงาน x งาน
+- {absentCount} x {ngan} = {absentAmountUpdated} บาท
+3) เกินเวลา / มาสาย
 - เข้างานเกินเวลา {lateMin} นาที หักเงิน {lateMin} บาท
 - ปรับมาสายเป็นจำนวน {nganLateCount} งาน หักเงิน  {nganLateCount} x {ngan} = {lateNgan} บาท
-- รวมการหักเงินเป็น {lateNgan + lateMin} บาท
+- รวมการหักเงินเป็น {lateUpdateAmount} บาท
         """
 
         ####################################################################################

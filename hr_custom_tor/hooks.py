@@ -257,5 +257,12 @@ fixtures = [
         "doctype": "Property Setter",
         "filters": [["name", "in", ("Leave Application-total_leave_days-precision",)]],
     },
-    {"doctype": "Server Script", "filters": [["name", "in", ("Calculate Salary")]]},
+    # {"doctype": "Server Script", "filters": [["name", "in", ("Calculate Salary")]]},
+    # {
+    #     "doctype": "Property Setter",
+    #     "filters": [["module", "=", "Hr Custom Tor"]],
+    # },
 ]
+
+
+after_migrate = "hr_custom_tor.migrate.after_migrate"

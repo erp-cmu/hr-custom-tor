@@ -30,11 +30,19 @@ def execute(filters=None):
     colsBase = [
         {
             "fieldname": "employee",
-            "label": "พนักงาน" if not isDev else "employee",
-            "fieldtype": "Link",
+            "label": "รหัสพนักงาน" if not isDev else "employee",
+            # "fieldtype": "Link",
+            "fieldtype": "Data",
             "options": "Employee",
             "hidden": 0,
-            "width": 250,
+            # "width": 250,
+        },
+        {
+            "fieldname": "employee_name",
+            "label": "ชื่อ" if not isDev else "employee",
+            "fieldtype": "Data",
+            "hidden": 0,
+            # "width": 250,
         },
         {
             "fieldname": "attendance_date",
@@ -201,6 +209,7 @@ def execute(filters=None):
 
     colsFieldDaily = [
         "employee",
+        "employee_name",
         "attendance_date",
         "is_working_day",
         "description",
@@ -235,6 +244,7 @@ def execute(filters=None):
 
     colsFieldSummary = [
         "employee",
+        "employee_name",
         "is_working_day",
         "is_present",
         "is_absent",
