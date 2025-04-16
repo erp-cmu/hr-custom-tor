@@ -3,7 +3,13 @@ import frappe
 # from frappe.utils.nestedset import NestedSet
 from erpnext.controllers.status_updater import validate_status
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
-import requests
+from hr_custom_tor.services.attendance_analyze import (
+    getDateRange,
+    getDfAttSummary,
+    getDfHoliday,
+    getDfAtt,
+)
+import datetime
 
 
 class CustomSalarySlip(SalarySlip):
@@ -18,28 +24,37 @@ class CustomSalarySlip(SalarySlip):
     def get_emp_and_working_day_details(self):
         super().get_emp_and_working_day_details()
 
-        # r = requests.post(
-        #     "http://localhost:8000/api/method/calc_salary", json={"name": "nirand"}
-        # )
-
-        # frappe.msgprint(r.json())
-
+        ############################
+        # Another way to get information from server script (not using this right now)
+        ############################
         # try:
-        # Function definition
-        # def script_calculate_salary(self):
-        #     return None
-
-        lc = {}
-        sc = frappe.get_doc("Server Script", "Calculate Salary")
-        exec(sc.script, locals(), lc)
-
-        amount = lc["amount"]
-
-        # amount = script_calculate_salary(self)
-        # amount = calc_amount()
-        frappe.msgprint(str(amount))
+        #     lc = {}
+        #     sc = frappe.get_doc("Server Script", "Calculate Salary")
+        #     exec(sc.script, locals(), lc)
+        #     amount = lc["amount"]
+        #     frappe.msgprint(str(amount))
         # except Exception:
         #     frappe.throw("Error executing server script")
+
+        startDate = self.start_date
+        endDate = self.end_date
+
+        if (startDate is None) or (endDate is None):
+            return
+            # frappe.throw("No start_date or end_date")
+
+        if isinstance(startDate, str):
+            startDateStr = startDate
+            endDateStr = endDate
+        elif isinstance(startDate, datetime.date):
+            startDateStr = startDate.strftime("%Y-%m-%d")
+            endDateStr = endDate.strftime("%Y-%m-%d")
+
+        employeeNames = [self.employee]
+
+        dfAtt, dfDateRange = getDfAtt(
+            startDate=startDateStr, endDate=endDateStr, employeeNames=employeeNames
+        )
 
         sd = frappe.get_doc(
             {

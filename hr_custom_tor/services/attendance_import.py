@@ -77,9 +77,10 @@ def processCheckInDF(dfr, dfHoliday):
         return sr
 
     filtIIO = dfr["incompleteInOut"]
-    dfr.loc[filtIIO, :] = dfr.loc[filtIIO, :].apply(
-        addTimeForIncompleteCheckInOut, axis=1
-    )
+    if filtIIO.any():
+        dfr.loc[filtIIO, :] = dfr.loc[filtIIO, :].apply(
+            addTimeForIncompleteCheckInOut, axis=1
+        )
 
     def calculateInOut(row):
         times = row.loc[timeCols].dropna()

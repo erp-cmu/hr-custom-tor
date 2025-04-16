@@ -118,8 +118,8 @@ def execute(filters=None):
         },
         {
             "fieldname": "late_over_10min_count",
-            "label": "มาสายเกิน 10 นาที" if not isDev else "late_over_10min_count",
-            "fieldtype": "Float",
+            "label": "มาสายเกิน 10 นาที (ครั้ง)" if not isDev else "late_over_10min_count",
+            "fieldtype": "Int",
         },
         {
             "fieldname": "late_min_for_deduct",
