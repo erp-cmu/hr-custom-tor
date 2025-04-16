@@ -8,6 +8,12 @@ from hr_custom_tor.services.attendance_analyze import (
     getDfAttSummary,
 )
 import datetime
+from frappe.utils import (
+    cint,
+    cstr,
+    flt,
+    rounded,
+)
 
 
 def getSalaryDetails(parent, abbr):
@@ -86,20 +92,44 @@ class CustomSalarySlip(SalarySlip):
 
         baseSalary = self.getAmountFromSalaryStructure(abbr="BASE_SALARY")
         lunch = self.getAmountFromSalaryStructure(abbr="LUNCH")
-        ngan = baseSalary / 30
+        ngan = flt(baseSalary / 30, precision=2)
 
-        lunchUpdated = lunch * srAttSummary["is_present_on_working_day"]
-        self.updateSalaryDetails("LUNCH", lunchUpdated)
+        presentOnWorkingDayCount = cint(srAttSummary["is_present_on_working_day"])
+        lunchAmountUpdated = lunch * presentOnWorkingDayCount
+        self.updateSalaryDetails("LUNCH", lunchAmountUpdated)
 
-        absentUpdated = ngan * srAttSummary["deduct_ngan_absent"]
-        self.updateSalaryDetails("ABSENT", absentUpdated)
+        absentCount = cint(srAttSummary["deduct_ngan_absent"])
+        absentAmountUpdated = flt(ngan * absentCount, precision=2)
+        self.updateSalaryDetails("ABSENT", absentAmountUpdated)
 
-        lateNgan = ngan * srAttSummary["deduct_ngan_late"]
-        lateMin = 1 * srAttSummary["late_min_for_deduct"]
+        nganLateCount = cint(srAttSummary["deduct_ngan_late"])
+        lateNgan = flt(ngan * nganLateCount, precision=2)
+        lateMin = 1 * cint(srAttSummary["late_min_for_deduct"])
         self.updateSalaryDetails("LATE", lateNgan + lateMin)
 
         socialUpdate = 0.05 * baseSalary if baseSalary < 15000 else 0.05 * 15000
         self.updateSalaryDetails("SOCIAL", socialUpdate)
+
+        salaryCalc = f"""
+-----------------------------------
+- เงินเดือน = {baseSalary} บาท
+- งาน = {ngan} บาท 
+- ค่าอาหารกลางวัน = {lunch} บาท (ต่อวัน)
+-----------------------------------
+เพิ่มเงินเดือน
+1) ค่าอาหารกลางวัน 
+- มาทำงานในวันทำงาน {presentOnWorkingDayCount} วัน
+- เพิ่มเงิน {presentOnWorkingDayCount} x {lunch} = {lunchAmountUpdated} บาท
+-----------------------------------
+หักเงินเดือน
+1) เข้างานไม่ครบ
+- เข้างานไม่ครบ {absentCount} วัน
+- หักเงิน {absentCount} x {ngan} = {absentAmountUpdated} บาท
+2) เกินเวลา / มาสาย
+- เข้างานเกินเวลา {lateMin} นาที หักเงิน {lateMin} บาท
+- ปรับมาสายเป็นจำนวน {nganLateCount} งาน หักเงิน  {nganLateCount} x {ngan} = {lateNgan} บาท
+- รวมการหักเงินเป็น {lateNgan + lateMin} บาท
+        """
 
         ####################################################################################
         # If you want to inject a new salary details
@@ -117,3 +147,5 @@ class CustomSalarySlip(SalarySlip):
         ####################################################################################
 
         self.calculate_net_pay()
+        self.custom_salary_calc_details = salaryCalc
+        pass
