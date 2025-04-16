@@ -193,8 +193,8 @@ def execute(filters=None):
             "fieldtype": "Int",
         },
         {
-            "fieldname": "duduct_ngan_absent",
-            "label": "จำนวนวันทำงานไม่ครบ" if not isDev else "duduct_ngan_absent",
+            "fieldname": "deduct_ngan_absent",
+            "label": "จำนวนวันทำงานไม่ครบ" if not isDev else "deduct_ngan_absent",
             "fieldtype": "Int",
         },
     ]
@@ -239,7 +239,7 @@ def execute(filters=None):
         "is_present",
         "is_absent",
         "is_on_leave",
-        "duduct_ngan_absent",
+        "deduct_ngan_absent",
         "is_on_partial_leave",
         "is_present_on_working_day",
         "is_present_on_holiday_weekend",

@@ -193,11 +193,11 @@ def getDfAttSummary(dfAtt: pd.DataFrame, dfDateRange: pd.DataFrame):
 
     dfAttSummary["deduct_ngan_late"] = dfAttSummary.apply(getDeductNgan, axis=1)
 
-    def getDuductNganAbsent(row):
+    def getDeductNganAbsent(row):
         count = row["is_working_day"] - (row["is_on_leave"] + row["is_present"])
         return count if count > 0 else 0
 
-    dfAttSummary["duduct_ngan_absent"] = dfAttSummary.apply(getDuductNganAbsent, axis=1)
+    dfAttSummary["deduct_ngan_absent"] = dfAttSummary.apply(getDeductNganAbsent, axis=1)
 
     # Inject "employee_name" so that the "employee" (i.e. EMP-001) columns has "employee_name" (i.e. พี่หนอ) on it. (Something in frappe that makes this happen.)
     dfAttSummary["employee_name"] = dfAttSummary["employee"].apply(
